@@ -35,6 +35,14 @@ foreach ($ou in $ous) { New-ADOrganizationalUnit -Name $ou -Path "DC=lab,DC=loca
 
 📸 [Screenshot Request]: Capture the "Settings" tab in the Group Policy Management Console (GPMC) for one of your custom policies.
 
+To make this look professional in your repository, capture these three specific screenshots:
+
+The Join Confirmation: The Windows dialog box that pops up saying "Welcome to the lab.local domain."
+
+The Success Proof: A screenshot of your Command Prompt on the client showing gpresult /r with your policy listed as "Applied."
+
+The Result: A photo of the locked Windows login screen after the inactivity timer has passed.
+
 🔍 Troubleshooting & VerificationIn a real-world environment, issues are inevitable. Here is how I validated the integrity of my deployment:
 Issue Encountered Resolution Strategy
 GPO not applyingRun gpupdate /force on client; verify linkage in GPMC.
