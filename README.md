@@ -129,6 +129,34 @@ The following table outlines the technical security controls enforced across the
 
 <img width="500" alt="image" src="screenshots/Screenshot 2026-05-24 000704.png">
 
+## 🧪 Validating Security Policies: GPO Testing
+After linking the IT Security Policy to the IT Organizational Unit, I verified the policy's efficacy by deploying a domain-joined client VM. This ensured that GPO inheritance and security hardening were correctly functioning within the directory hierarchy.
+
+### Step 1: Client VM Configuration
+To facilitate seamless domain integration, the client VM required specific network adjustments:
+
+Static DNS Assignment: Configured the client's Primary DNS server to match the Domain Controller's IP (10.0.0.4), ensuring authoritative resolution of the lab.local domain.
+
+Domain Integration: Joined the VM to the lab.local forest and relocated its computer object into the IT OU to bring it within the GPO's scope of influence.
+
+### Step 2: Policy Enforcement & Verification
+I performed a programmatic policy refresh and validated the results using administrative audit tools:
+
+```powershell
+# Force GPO application from the client-side
+gpupdate /force
+
+# Validate applied policies
+gpresult /r
+```
+### Step 3: Functional Verification (Alice.chen)
+I authenticated as the domain user alice.chen to confirm the enforcement of the following security baselines:
+
+Password Hardening: Verified that the 12-character minimum length and complexity requirements were enforced during credential management.
+
+Inactivity Lock: Confirmed that the system automatically locked the session after the defined 15-minute inactivity threshold.
+
+
 ### Step 6: Operational Identity Management & Administrative Auditing
 This phase outlines daily helpdesk and administrator tasks commonly executed on an enterprise network to maintain directory hygiene.
 
@@ -138,10 +166,12 @@ This phase outlines daily helpdesk and administrator tasks commonly executed on 
 # Scenario A: Perform Password Reset & Enforce Change at Next Login Cycle
 Set-ADAccountPassword -Identity "bob.patel" -Reset -NewPassword (ConvertTo-SecureString "NewTempPass2026!" -AsPlainText -Force)
 Set-ADUser -Identity "bob.patel" -ChangePasswordAtLogon $true
-
+```
+```
 # Scenario B: Remediate Account Lockout Event Following Brute-Force Triage
 Unlock-ADAccount -Identity "carol.jones"
-
+```
+```
 # Scenario C: Disable Account Lifecycle Profile During Offboarding Phase
 Disable-ADAccount -Identity "david.smith"
 ```
@@ -158,6 +188,14 @@ Get-ADPrincipalGroupMembership -Identity "alice.chen" | Select-Object Name
 ### 🔍 Validation Framework (Ensuring Lab Stability)
 To verify everything is configured correctly, run these programmatic assertions in an administrative PowerShell console:
 
+| Check | PowerShell Command | Expected Result |
+| :--- | :--- | :--- |
+| **Domain Controller** | `Get-ADDomainController` | Returns DC info including forest `lab.local` |
+| **Organizational Units** | `Get-ADOrganizationalUnit -Filter *` | Lists all 5 OUs you created |
+| **User Accounts** | `Get-ADUser -Filter {Enabled -eq $true}` | Lists your 4 test accounts |
+| **Group Memberships** | `Get-ADGroupMember -Identity IT_Admins` | Returns `alice.chen` |
+| **GPO Linkage** | `Get-GPInheritance -Target 'OU=IT,DC=lab,DC=local'` | Shows `IT Security Policy` as linked |
+
 ```powershell
 # 1. Validate Core Domain Controller Status & Registration
 Get-ADDomainController | Select-Object Name, Forest, OperatingSystem
@@ -171,6 +209,35 @@ Get-ADUser -Filter {Enabled -eq $true} | Select-Object SamAccountName, Name
 # 4. Assert Group Policy Linkage and Target OU Inheritance
 Get-GPInheritance -Target 'OU=IT,DC=lab,DC=local'
 ```
+## 🛠️ Troubleshooting & Known Issues
+During the deployment of the domain-joined client VM, I encountered a specific Remote Desktop Authorization Error when attempting to log in with a domain-level identity (alice.chen). Even with valid credentials, the client refused the connection.
+
+Issue: "User not authorized for remote login"
+After joining the client to the lab.local domain, domain users were unable to establish an RDP session, despite having valid credentials. This is because Windows security policies default to denying remote access to domain users on newly joined machines.
+
+The Ultimate Remediation
+To resolve this, I manually updated the Remote Desktop User Rights Assignment on the client VM:
+
+Granting RDP Access Rights:
+
+Logged in to the client VM using the local administrator account.
+
+Accessed the Local Security Policy editor by running secpol.msc.
+
+Navigated to: Local Policies > User Rights Assignment.
+
+Modified the policy: "Allow log on through Remote Desktop Services".
+
+Added the specific domain user (alice.chen) and/or the Domain Users group to the authorized list.
+
+Verifying System Properties:
+
+Confirmed the change by running sysdm.cpl and navigating to the Remote tab.
+
+Verified that the user was explicitly added to the "Select Users..." list within the Remote Desktop settings to ensure the GUI and the security policy were synchronized.
+
+<img width="500" alt="image" src="screenshots/Screenshot 2026-05-24 014021.png">
+
 ## 🎯 Key Takeaways & Portfolio Summaries
 Centralized Identity Lifecycles: Managed user provisioning, updates, temporary account freezes, and termination phases down to a single identity source. This minimizes management overhead and closes every enterprise access path simultaneously during account offboarding.
 
