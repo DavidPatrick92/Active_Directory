@@ -20,8 +20,7 @@ Configured the Azure Virtual Network Interface (NIC) to assign a Static Private 
 
 Verified local DNS resolution by ensuring the server correctly identified its own network loopback address as the primary resolver for directory services.
 
-📸 [PORTFOLIO SCREENSHOT PLACEHOLDER]
-Capture a screenshot of your Azure Portal > VM > Networking blade showing the "Private IP address" is set to "Static" and displays your chosen IP (e.g., 10.0.0.4). This proves you managed the infrastructure layer effectively
+<img width="1000" alt="image" src="https://github.com/DavidPatrick92/Active_Directory/blob/main/screenshots/Screenshot%202026-05-24%20220459.png">
 ---
 
 ### Step 2: Active Directory Domain Services Installation
@@ -58,8 +57,7 @@ Install-ADDSForest `
     -SafeModeAdministratorPassword (ConvertTo-SecureString 'YourSecureDSRM123!' -AsPlainText -Force) `
     -Force:$true
 ```
-📸 [PORTFOLIO SCREENSHOT PLACEHOLDER]
-Capture a screenshot of the post-reboot Server Manager dashboard featuring the Active Directory (AD DS) and DNS server roles highlighted green in the side navigation panel.
+<img width="1000" alt="image" src="https://github.com/DavidPatrick92/Active_Directory/blob/main/screenshots/Screenshot%202026-05-23%20233822.png">.
 
 ### Step 4: Enterprise Hierarchy (OUs, Security Groups, & Users)
 To simulate practical operations, this layer designs an explicit role-based access model across standard operational department vectors (IT, Finance, HR, Sales).
@@ -102,8 +100,7 @@ Add-ADGroupMember -Identity "Finance_Users" -Members "bob.patel"
 Add-ADGroupMember -Identity "HR_Users" -Members "carol.jones"
 Add-ADGroupMember -Identity "Sales_Users" -Members "david.smith"
 ```
-📸 [PORTFOLIO SCREENSHOT PLACEHOLDER]
-Capture a screenshot of your expanded Active Directory Users and Computers (ADUC) tree view, making sure your newly created OUs, security groups, and test users are clearly visible.
+<img width="1000" alt="image" src="screenshots/Screenshot 2026-05-23 234700.png">
 
 ### Step 5: Enforcing Enterprise Security Policies via GPO
 Group Policy Object (GPO) integration automates corporate baseline hardening across endpoints and users instantly, neutralizing physical exfiltration paths and credential threats globally.
@@ -124,8 +121,13 @@ The following table outlines the technical security controls enforced across the
 | `Computer Config -> Windows Settings -> Security -> Local Policies -> Security Options` | Interactive logon: Machine inactivity limit | **900 Seconds (15 Min)** |
 | `Computer Config -> Administrative Templates -> System -> Removable Storage Access` | All removable storage classes: Deny all access | **Enabled (Blocks USB Exfiltration)** |
 
-📸 [PORTFOLIO SCREENSHOT PLACEHOLDER]
-Capture a screenshot of the GPMC window focusing on your "Settings" tab report for the "IT Security Policy". This explicitly proves the baseline controls you implemented.
+<img width="500" alt="image" src="screenshots/Screenshot 2026-05-24 000114.png">
+
+<img width="500" alt="image" src="screenshots/Screenshot 2026-05-24 000304.png">
+
+<img width="500" alt="image" src="screenshots/Screenshot 2026-05-24 000426.png">
+
+<img width="500" alt="image" src="screenshots/Screenshot 2026-05-24 000704.png">
 
 ### Step 6: Operational Identity Management & Administrative Auditing
 This phase outlines daily helpdesk and administrator tasks commonly executed on an enterprise network to maintain directory hygiene.
