@@ -1,57 +1,180 @@
-🌐 Project Overview
+# 🌐 Project Overview
 This project simulates a production-grade enterprise identity management environment. By deploying Windows Server 2025, I configured a centralized Active Directory domain to manage users, computers, and security policies. This lab serves as a foundational demonstration of my ability to implement Role-Based Access Control (RBAC), enforce security hardening baselines, and perform system administration—all essential skills for a Junior System Administrator or SOC Analyst.
 
-🛠️ Infrastructure & Environment
-Platform: Microsoft Azure (Standard_B2s Virtual Machine)
+## 🏗️ Lab Architecture & Scope
+* **Operating System:** Windows Server 2025 Datacenter (Gen2 Evaluation Platform)
+* **Deployment Vector:** Cloud Virtual Machine (Microsoft Azure Standard_B2s Instance)
+* **Target Core Services:** Active Directory Domain Services (AD DS), DNS, Group Policy Management Console (GPMC)
+* **Private Network Context:** Isolated VNet (`10.0.0.0/16` boundary), static IP mapping
 
-OS: Windows Server 2025 Datacenter
+---
 
-Core Services: Active Directory Domain Services (AD DS), DNS, GPMC
+## 🚀 Step-by-Step Implementation Guide
 
-🚀 Lab Implementation Steps
-1. Network Foundation & DNS
-Configured a static IP environment and pointed the DNS server to the local loopback (127.0.0.1) to ensure the domain controller correctly manages its own directory resolution.
+### Step 1: Network Foundation & IP Reservation
+To guarantee directory services stability, the server requires a persistent IP address. Rather than relying on standard dynamic DHCP, I leveraged Azure's platform-level IP reservation to ensure the Domain Controller maintains a fixed internal address (10.0.0.4) throughout its lifecycle.
 
-📸 [Screenshot Request]: Capture the IPv4 network properties showing your static IP and local DNS configuration.
+Provisioned a Windows Server 2025 Datacenter instance within an isolated Azure Virtual Network.
 
-2. AD DS & Forest Promotion
-Installed the Active Directory role and promoted the server to a Domain Controller for the lab.local forest.
+Configured the Azure Virtual Network Interface (NIC) to assign a Static Private IP address to the Domain Controller.
 
-# Role Installation
-Install-WindowsFeature -Name AD-Domain-Services, GPMC -IncludeManagementTools
+Verified local DNS resolution by ensuring the server correctly identified its own network loopback address as the primary resolver for directory services.
 
-📸 [Screenshot Request]: Capture the Server Manager dashboard showing AD DS and DNS roles as "Installed."
+📸 [PORTFOLIO SCREENSHOT PLACEHOLDER]
+Capture a screenshot of your Azure Portal > VM > Networking blade showing the "Private IP address" is set to "Static" and displays your chosen IP (e.g., 10.0.0.4). This proves you managed the infrastructure layer effectively
+---
 
-3. Identity Architecture (OUs & RBAC)Organized users into specific Organizational Units (OUs) to enforce the Principle of Least Privilege and streamline administration.
+### Step 2: Active Directory Domain Services Installation
+The installation phase deploys the core payload binaries and administrative tools, preparing the machine for its system lifecycle transformation into a Domain Controller.
 
-PowerShell
-Create Organizational Units
-$ous = "IT", "Finance", "HR", "Sales"
-foreach ($ou in $ous) { New-ADOrganizationalUnit -Name $ou -Path "DC=lab,DC=local" }
+1. Initiated the Server Manager interface inside the instance.
+2. Navigated through the **Add Roles and Features Wizard** to install the **Active Directory Domain Services** payload binaries along with relevant Remote Server Administration Tools (RSAT).
+3. Concurrent to AD DS installation, initialized the standalone Group Policy Management Console (GPMC) package to handle domain-wide security boundaries.
 
-📸 [Screenshot Request]: Capture the "Active Directory Users and Computers" (ADUC) console showing your organized OU structure.
+```powershell
+# Administrative PowerShell Pipeline: Role Payload Installation
+Install-WindowsFeature -Name AD-Domain-Services -IncludeManagementTools
+Install-WindowsFeature -Name GPMC
+```
 
-4. Security Hardening via Group PolicyImplemented GPOs to automate security controls across the domain, such as password complexity and disabling USB mass storage.
+### Step 3: Domain Controller Forest Promotion
+Installing binaries does not automatically create a domain environment. This phase builds a brand-new directory framework, declaring this asset the roots of identity orchestration.
 
-📸 [Screenshot Request]: Capture the "Settings" tab in the Group Policy Management Console (GPMC) for one of your custom policies.
+Triggered the Deployment Configuration post-install warning thread within Server Manager.
 
-To make this look professional in your repository, capture these three specific screenshots:
+Formulated a brand new directory forest designated explicitly under internal roots domain constraints: lab.local.
 
-The Join Confirmation: The Windows dialog box that pops up saying "Welcome to the lab.local domain."
+Established a secure Directory Services Restore Mode (DSRM) disaster-recovery token password.
 
-The Success Proof: A screenshot of your Command Prompt on the client showing gpresult /r with your policy listed as "Applied."
+Execution triggered an active system compilation and reboot phase, turning the unit into the root Domain Controller.
 
-The Result: A photo of the locked Windows login screen after the inactivity timer has passed.
+```powershell
+# Administrative PowerShell Pipeline: Automated Forest Inception
+Import-Module ADDSDeployment
+Install-ADDSForest `
+    -DomainName 'lab.local' `
+    -DomainNetBiosName 'LAB' `
+    -InstallDns:$true `
+    -SafeModeAdministratorPassword (ConvertTo-SecureString 'YourSecureDSRM123!' -AsPlainText -Force) `
+    -Force:$true
+```
+📸 [PORTFOLIO SCREENSHOT PLACEHOLDER]
+Capture a screenshot of the post-reboot Server Manager dashboard featuring the Active Directory (AD DS) and DNS server roles highlighted green in the side navigation panel.
 
-🔍 Troubleshooting & VerificationIn a real-world environment, issues are inevitable. Here is how I validated the integrity of my deployment:
-Issue Encountered Resolution Strategy
-GPO not applyingRun gpupdate /force on client; verify linkage in GPMC.
-User login failure  Confirm account is Enabled and ChangePasswordAtLogon is set.
-Remote Desktop (RDP) issue Ensure you are logging in as LAB\Administrator (domain admin), not local admin.
+### Step 4: Enterprise Hierarchy (OUs, Security Groups, & Users)
+To simulate practical operations, this layer designs an explicit role-based access model across standard operational department vectors (IT, Finance, HR, Sales).
 
-🎯 Key Takeaways
-Identity Management: Mastered the creation of OUs, security groups, and automated user provisioning to streamline onboarding/offboarding.
+Opened the Active Directory Users and Computers (ADUC) panel.
 
-Security Hardening: Gained experience applying GPOs to enforce enterprise-level password policies and system restrictions, effectively hardening the endpoint attack surface.
+Implemented hierarchical separation by creating separate Organizational Units (OUs) to serve as administrative containment targets for users and devices.
 
-Troubleshooting Proficiency: Developed a systematic approach to diagnosing authentication and policy application issues—a critical skill for incident response and helpdesk support.
+Created discrete departmental Security Groups to facilitate clean, scalable role-based access control (RBAC).
+
+Auto-provisioned target user personas leveraging enterprise name synchronization boundaries (firstname.lastname), appending them directly to matching security wrappers.
+
+``` powershell
+# Administrative PowerShell Pipeline: Directory Structure & Account Provisioning
+# 1. Instantiate Organizational Units
+New-ADOrganizationalUnit -Name "IT" -Path "DC=lab,DC=local"
+New-ADOrganizationalUnit -Name "Finance" -Path "DC=lab,DC=local"
+New-ADOrganizationalUnit -Name "HR" -Path "DC=lab,DC=local"
+New-ADOrganizationalUnit -Name "Sales" -Path "DC=lab,DC=local"
+New-ADOrganizationalUnit -Name "Computers" -Path "DC=lab,DC=local"
+```
+``` powershell
+# 2. Instantiate Security Groups (RBAC Wrappers)
+New-ADGroup -Name "IT_Admins" -GroupScope Global -GroupCategory Security -Path "OU=IT,DC=lab,DC=local"
+New-ADGroup -Name "Finance_Users" -GroupScope Global -GroupCategory Security -Path "OU=Finance,DC=lab,DC=local"
+New-ADGroup -Name "HR_Users" -GroupScope Global -GroupCategory Security -Path "OU=HR,DC=lab,DC=local"
+New-ADGroup -Name "Sales_Users" -GroupScope Global -GroupCategory Security -Path "OU=Sales,DC=lab,DC=local"
+```
+```powershell
+# 3. Provision Sample User Accounts & Assign Group Memberships
+$password = ConvertTo-SecureString "Welcome@2026!" -AsPlainText -Force
+
+New-ADUser -Name "alice.chen" -GivenName "Alice" -Surname "Chen" -SamAccountName "alice.chen" -UserPrincipalName "alice.chen@lab.local" -Path "OU=IT,DC=lab,DC=local" -AccountPassword $password -Enabled $true
+New-ADUser -Name "bob.patel" -GivenName "Bob" -Surname "Patel" -SamAccountName "bob.patel" -UserPrincipalName "bob.patel@lab.local" -Path "OU=Finance,DC=lab,DC=local" -AccountPassword $password -Enabled $true
+New-ADUser -Name "carol.jones" -GivenName "Carol" -Surname "Jones" -SamAccountName "carol.jones" -UserPrincipalName "carol.jones@lab.local" -Path "OU=HR,DC=lab,DC=local" -AccountPassword $password -Enabled $true
+New-ADUser -Name "david.smith" -GivenName "David" -Surname "Smith" -SamAccountName "david.smith" -UserPrincipalName "david.smith@lab.local" -Path "OU=Sales,DC=lab,DC=local" -AccountPassword $password -Enabled $true
+
+Add-ADGroupMember -Identity "IT_Admins" -Members "alice.chen"
+Add-ADGroupMember -Identity "Finance_Users" -Members "bob.patel"
+Add-ADGroupMember -Identity "HR_Users" -Members "carol.jones"
+Add-ADGroupMember -Identity "Sales_Users" -Members "david.smith"
+```
+📸 [PORTFOLIO SCREENSHOT PLACEHOLDER]
+Capture a screenshot of your expanded Active Directory Users and Computers (ADUC) tree view, making sure your newly created OUs, security groups, and test users are clearly visible.
+
+### Step 5: Enforcing Enterprise Security Policies via GPO
+Group Policy Object (GPO) integration automates corporate baseline hardening across endpoints and users instantly, neutralizing physical exfiltration paths and credential threats globally.
+
+Initiated the Group Policy Management Console (GPMC) interface.
+
+Engineered a targeted container policy artifact named: IT Security Policy, linking it directly onto the managed IT department OU block.
+
+Opened the GPO editor to define specific system settings matching rigid identity hygiene benchmarks:
+
+### Security Baseline Policy Configuration
+The following table outlines the technical security controls enforced across the IT department Organizational Unit via Group Policy Objects (GPOs):
+
+| Policy Path Location | Target Security Setting | Enforced Baseline Value |
+| :--- | :--- | :--- |
+| `Computer Config -> Windows Settings -> Security -> Account Policies -> Password Policy` | Minimum password length | **12 Characters** |
+| `Computer Config -> Windows Settings -> Security -> Account Policies -> Password Policy` | Password must meet complexity requirements | **Enabled** |
+| `Computer Config -> Windows Settings -> Security -> Local Policies -> Security Options` | Interactive logon: Machine inactivity limit | **900 Seconds (15 Min)** |
+| `Computer Config -> Administrative Templates -> System -> Removable Storage Access` | All removable storage classes: Deny all access | **Enabled (Blocks USB Exfiltration)** |
+
+📸 [PORTFOLIO SCREENSHOT PLACEHOLDER]
+Capture a screenshot of the GPMC window focusing on your "Settings" tab report for the "IT Security Policy". This explicitly proves the baseline controls you implemented.
+
+### Step 6: Operational Identity Management & Administrative Auditing
+This phase outlines daily helpdesk and administrator tasks commonly executed on an enterprise network to maintain directory hygiene.
+
+### Core Help Desk Execution Scenarios:
+
+``` powershell
+# Scenario A: Perform Password Reset & Enforce Change at Next Login Cycle
+Set-ADAccountPassword -Identity "bob.patel" -Reset -NewPassword (ConvertTo-SecureString "NewTempPass2026!" -AsPlainText -Force)
+Set-ADUser -Identity "bob.patel" -ChangePasswordAtLogon $true
+
+# Scenario B: Remediate Account Lockout Event Following Brute-Force Triage
+Unlock-ADAccount -Identity "carol.jones"
+
+# Scenario C: Disable Account Lifecycle Profile During Offboarding Phase
+Disable-ADAccount -Identity "david.smith"
+```
+### Directory Compliance Auditing Queries:
+
+``` powershell
+# Compliance Audit: Discover Stale/Inactive Identities (No Authentication Event For 90 Days)
+$cutoff = (Get-Date).AddDays(-90)
+Get-ADUser -Filter {LastLogonDate -lt $cutoff -and Enabled -eq $true} -Properties LastLogonDate | Select-Object Name, LastLogonDate
+
+# Access Verification Audit: Validate Nested Token Memberships For Elevated Accounts
+Get-ADPrincipalGroupMembership -Identity "alice.chen" | Select-Object Name
+```
+### 🔍 Validation Framework (Ensuring Lab Stability)
+To verify everything is configured correctly, run these programmatic assertions in an administrative PowerShell console:
+
+```powershell
+# 1. Validate Core Domain Controller Status & Registration
+Get-ADDomainController | Select-Object Name, Forest, OperatingSystem
+
+# 2. Assert Organization Units Structure Generation
+Get-ADOrganizationalUnit -Filter * | Select-Object Name, DistinguishedName
+
+# 3. Assert Active Operational Accounts Status
+Get-ADUser -Filter {Enabled -eq $true} | Select-Object SamAccountName, Name
+
+# 4. Assert Group Policy Linkage and Target OU Inheritance
+Get-GPInheritance -Target 'OU=IT,DC=lab,DC=local'
+```
+## 🎯 Key Takeaways & Portfolio Summaries
+Centralized Identity Lifecycles: Managed user provisioning, updates, temporary account freezes, and termination phases down to a single identity source. This minimizes management overhead and closes every enterprise access path simultaneously during account offboarding.
+
+Role-Based Access Control (RBAC): Applied the core security concept of Least Privilege. Users were systematically added to distinct departmental wrappers rather than being granted permissions manually. This prevents privilege creep and ensures a cleaner administrative attack surface.
+
+Scalable Architecture Governance: Leveraged Organization Units matched with Group Policy Objects (GPOs) to enforce strict technical controls (such as blocking data exfiltration via USB drives and establishing automated idle lock timers) instantly across thousands of systems from a centralized console.
+
+Administrative Engineering Readiness: Built practical experience managing common, real-world ticketing events (such as locked profiles and password compliance management) alongside scripting custom directory compliance reports using PowerShell pipelines.
+
